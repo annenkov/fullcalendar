@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<script type='text/javascript' src='loader.js'></script>
+<script type='text/javascript'>
+
+	$(document).ready(function() {
+		$('#calendar').fullCalendar({
+			//weekends: false,
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'month,agendaWeek,basicWeek,agendaDay,basicDay'
+			},
+			editable: true,
+			eventSources: [
+				$.fullCalendar.gcalFeed(
+					"http://www.google.com/calendar/feeds/usa__en%40holiday.calendar.google.com/public/basic",
+					{
+						editable: true,
+						className: ['holiday']
+					}
+				),
+				$.fullCalendar.gcalFeed(
+					"http://www.google.com/calendar/feeds/b62ul6i1vvfh9vqabsal835028%40group.calendar.google.com/public/basic", // most recent event in Nov 2009
+					{
+						editable: true,
+						currentTimezone: 'America/Edmonton' // 'America/Los_Angeles' 'America/Los Angeles'
+					}
+				)
+			],
+			eventClick: function(event) {
+				console.log(event.start);
+				console.log(event.end);
+				return false;
+			}
+		});
+	});
+
+</script>
+<style>
+
+	.holiday,
+	.fc-agenda .holiday .fc-event-time,
+	.holiday a {
+		background: green;
+		border-color: green;
+		color: yellow;
+		}
+
+</style>
+</head>
+<body style='font-size:12px'>
+<div id='calendar' style='width:900px;margin:20px auto 0;font-family:arial'></div>
+</body>
+</html>
