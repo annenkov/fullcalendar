@@ -265,6 +265,12 @@ function AgendaView(element, calendar, viewName) {
 			height: height
 		});
 		
+		// if the table ends up shorter than the allotted view, shrink the view to fit the table
+		var tableHeight = body.find('table:first').height();
+		if (tableHeight < body.height()) {
+			body.height(tableHeight);
+		}
+		
 		if (dateChanged) {
 			resetScroll();
 		}
@@ -297,11 +303,19 @@ function AgendaView(element, calendar, viewName) {
 		);
 		axisWidth = axisWidth;
 		
-		// column width
+		// column width, except for last column
 		colWidth = Math.floor((clientWidth - axisWidth) / colCnt);
 		setOuterWidth(stripeTDs.slice(0, -1), colWidth);
 		setOuterWidth(topTDs.slice(1, -2), colWidth);
-		setOuterWidth(topTDs.slice(-2, -1), clientWidth - axisWidth - colWidth*(colCnt-1));
+		
+		// column width for last column
+		var hasScrollbar = body[0].scrollHeight != body[0].clientHeight;
+		if (hasScrollbar) {
+			setOuterWidth(topTDs.slice(-2, -1), clientWidth - axisWidth - colWidth*(colCnt-1));
+		}else{
+			topTDs.slice(-1).hide();
+			$('tr.fc-all-day th').slice(-1).hide();
+		}
 		
 		bg.css({
 			left: axisWidth,
