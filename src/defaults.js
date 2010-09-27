@@ -17,6 +17,7 @@ var defaults = {
 	//disableResizing: false,
 	
 	allDayDefault: true,
+	ignoreTimezone: true,
 	
 	// event ajax
 	lazyFetching: true,
