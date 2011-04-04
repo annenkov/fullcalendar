@@ -11,6 +11,7 @@ function Calendar(element, options, eventSources) {
 	t.refetchEvents = refetchEvents;
 	t.reportEvents = reportEvents;
 	t.reportEventChange = reportEventChange;
+	t.rerenderEvents = rerenderEvents;
 	t.changeView = changeView;
 	t.select = select;
 	t.unselect = unselect;
@@ -113,7 +114,7 @@ function Calendar(element, options, eventSources) {
 		$(window).unbind('resize', windowResize);
 		header.destroy();
 		content.remove();
-		element.removeClass('fc fc-rtl fc-ui-widget');
+		element.removeClass('fc fc-rtl ui-widget');
 	}
 	
 	

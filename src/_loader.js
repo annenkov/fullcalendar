@@ -1,6 +1,6 @@
 (function() {
 
-var JQUERY = 'jquery-1.4.4.min.js';
+var JQUERY = 'jquery-1.5.min.js';
 var JQUERY_UI = 'jquery-ui-1.8.9.custom.min.js';
 var JQUERY_LEGACY = 'jquery-1.3.2.min.js';
 var JQUERY_UI_LEGACY = 'jquery-ui-1.7.3.custom.min.js';
@@ -19,6 +19,7 @@ css('main.css');
 css('common/common.css');
 css('basic/basic.css');
 css('agenda/agenda.css');
+cssprint('common/print.css');
 
 if (!legacy) {
 	jslib('../lib/' + JQUERY);
@@ -116,6 +117,11 @@ function endload() {
 
 function css(file) {
 	tags.push("<link rel='stylesheet' type='text/css' href='" + prefix + file + "' />");
+}
+
+
+function cssprint(file) {
+	tags.push("<link rel='stylesheet' type='text/css' href='" + prefix + file + "' media='print' />");
 }
 
 

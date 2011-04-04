@@ -179,7 +179,7 @@ function AgendaView(element, calendar, viewName) {
 			"<th class='fc-agenda-axis " + headerClass + "'>&nbsp;</th>";
 		for (i=0; i<colCnt; i++) {
 			s +=
-				"<th class='fc- fc-col" + i + ' ' + headerClass + "'/>";
+				"<th class='fc- fc-col" + i + ' ' + headerClass + "'/>"; // fc- needed for setDayID
 		}
 		s +=
 			"<th class='fc-agenda-gutter " + headerClass + "'>&nbsp;</th>" +
@@ -190,7 +190,7 @@ function AgendaView(element, calendar, viewName) {
 			"<th class='fc-agenda-axis " + headerClass + "'>&nbsp;</th>";
 		for (i=0; i<colCnt; i++) {
 			s +=
-				"<td class='fc- fc-col" + i + ' ' + contentClass + "'>" +
+				"<td class='fc- fc-col" + i + ' ' + contentClass + "'>" + // fc- needed for setDayID
 				"<div>" +
 				"<div class='fc-day-content'>" +
 				"<div style='position:relative'>&nbsp;</div>" +
@@ -259,7 +259,7 @@ function AgendaView(element, calendar, viewName) {
 		}
 		
 		slotScroller =
-			$("<div style='position:absolute;left:0;width:100%;overflow-x:hidden;overflow-y:auto'/>")
+			$("<div style='position:absolute;width:100%;overflow-x:hidden;overflow-y:auto'/>")
 				.appendTo(slotLayer);
 				
 		slotContent =
@@ -434,7 +434,7 @@ function AgendaView(element, calendar, viewName) {
 	
 	
 	function slotClick(ev) {
-		if (!opt('selectable')) { // SelectionManager will worry about dayClick
+		if (!opt('selectable')) { // if selectable, SelectionManager will worry about dayClick
 			var col = Math.min(colCnt-1, Math.floor((ev.pageX - dayTable.offset().left - axisWidth) / colWidth));
 			var date = colDate(col);
 			var rowMatch = this.parentNode.className.match(/fc-slot(\d+)/); // TODO: maybe use data
@@ -695,20 +695,18 @@ function AgendaView(element, calendar, viewName) {
 								.appendTo(slotContent);
 						}
 					}else{
+						rect.isStart = true; // conside rect a "seg" now
+						rect.isEnd = true;   //
 						selectionHelper = $(slotSegHtml(
 							{
 								title: '',
 								start: startDate,
 								end: endDate,
-								className: [],
+								className: ['fc-select-helper'],
 								editable: false
 							},
-							rect,
-							'fc-event fc-event-vert fc-corner-top fc-corner-bottom '
+							rect
 						));
-						if ($.browser.msie) {
-							selectionHelper.find('span.fc-event-bg').hide(); // nested opacities mess up in IE, just hide
-						}
 						selectionHelper.css('opacity', opt('dragOpacity'));
 					}
 					if (selectionHelper) {

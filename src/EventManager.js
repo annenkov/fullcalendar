@@ -1,7 +1,16 @@
 
+fc.sourceNormalizers = [];
+fc.sourceFetchers = [];
+
+var ajaxDefaults = {
+	dataType: 'json',
+	cache: false
+};
+
 var eventGUID = 1;
 
-function EventManager(options, sources) {
+
+function EventManager(options, _sources) {
 	var t = this;
 	
 	
@@ -24,11 +33,18 @@ function EventManager(options, sources) {
 	
 	
 	// locals
+	var stickySource = { events: [] };
+	var sources = [ stickySource ];
 	var rangeStart, rangeEnd;
 	var currentFetchID = 0;
 	var pendingSourceCnt = 0;
 	var loadingLevel = 0;
 	var cache = [];
+	
+	
+	for (var i=0; i<_sources.length; i++) {
+		_addEventSource(_sources[i]);
+	}
 	
 	
 	
@@ -57,11 +73,13 @@ function EventManager(options, sources) {
 	function fetchEventSource(source, fetchID) {
 		_fetchEventSource(source, function(events) {
 			if (fetchID == currentFetchID) {
-				for (var i=0; i<events.length; i++) {
-					normalizeEvent(events[i]);
-					events[i].source = source;
+				if (events) {
+					for (var i=0; i<events.length; i++) {
+						events[i].source = source;
+						normalizeEvent(events[i]);
+					}
+					cache = cache.concat(events);
 				}
-				cache = cache.concat(events);
 				pendingSourceCnt--;
 				if (!pendingSourceCnt) {
 					reportEvents(cache);
@@ -72,35 +90,74 @@ function EventManager(options, sources) {
 	
 	
 	function _fetchEventSource(source, callback) {
-		if (typeof source == 'string') {
-			var params = {};
-			params[options.startParam] = Math.round(rangeStart.getTime() / 1000);
-			params[options.endParam] = Math.round(rangeEnd.getTime() / 1000);
-			if (options.cacheParam) {
-				params[options.cacheParam] = (new Date()).getTime(); // TODO: deprecate cacheParam
+		var i;
+		var fetchers = fc.sourceFetchers;
+		var res;
+		for (i=0; i<fetchers.length; i++) {
+			res = fetchers[i](source, rangeStart, rangeEnd, callback);
+			if (res === true) {
+				// the fetcher is in charge. made its own async request
+				return;
 			}
-			pushLoading();
-			// TODO: respect cache param in ajaxSetup
-			$.ajax({
-				url: source,
-				dataType: 'json',
-				data: params,
-				cache: options.cacheParam || false, // don't let jquery prevent caching if cacheParam is being used
-				success: function(events) {
-					popLoading();
+			else if (typeof res == 'object') {
+				// the fetcher returned a new source. process it
+				_fetchEventSource(res, callback);
+				return;
+			}
+		}
+		var events = source.events;
+		if (events) {
+			if ($.isFunction(events)) {
+				pushLoading();
+				events(cloneDate(rangeStart), cloneDate(rangeEnd), function(events) {
 					callback(events);
-				}
-			});
-		}
-		else if ($.isFunction(source)) {
-			pushLoading();
-			source(cloneDate(rangeStart), cloneDate(rangeEnd), function(events) {
-				popLoading();
+					popLoading();
+				});
+			}
+			else if ($.isArray(events)) {
 				callback(events);
-			});
-		}
-		else {
-			callback(source); // src is an array
+			}
+			else {
+				callback();
+			}
+		}else{
+			var url = source.url;
+			if (url) {
+				var success = source.success;
+				var error = source.error;
+				var complete = source.complete;
+				var data = $.extend({}, source.data || {});
+				var startParam = firstDefined(source.startParam, options.startParam);
+				var endParam = firstDefined(source.endParam, options.endParam);
+				if (startParam) {
+					data[startParam] = Math.round(+rangeStart / 1000);
+				}
+				if (endParam) {
+					data[endParam] = Math.round(+rangeEnd / 1000);
+				}
+				pushLoading();
+				$.ajax($.extend({}, ajaxDefaults, source, {
+					data: data,
+					success: function(events) {
+						events = events || [];
+						var res = applyAll(success, this, arguments);
+						if ($.isArray(res)) {
+							events = res;
+						}
+						callback(events);
+					},
+					error: function() {
+						applyAll(error, this, arguments);
+						callback();
+					},
+					complete: function() {
+						applyAll(complete, this, arguments);
+						popLoading();
+					}
+				}));
+			}else{
+				callback();
+			}
 		}
 	}
 	
@@ -109,25 +166,38 @@ function EventManager(options, sources) {
 	/* Sources
 	-----------------------------------------------------------------------------*/
 	
-	
-	// first event source is reserved for "sticky" events
-	sources.unshift([]);
-	
 
 	function addEventSource(source) {
-		sources.push(source);
-		pendingSourceCnt++;
-		fetchEventSource(source, currentFetchID); // will eventually call reportEvents
+		source = _addEventSource(source);
+		if (source) {
+			pendingSourceCnt++;
+			fetchEventSource(source, currentFetchID); // will eventually call reportEvents
+		}
+	}
+	
+	
+	function _addEventSource(source) {
+		if ($.isFunction(source) || $.isArray(source)) {
+			source = { events: source };
+		}
+		else if (typeof source == 'string') {
+			source = { url: source };
+		}
+		if (typeof source == 'object') {
+			normalizeSource(source);
+			sources.push(source);
+			return source;
+		}
 	}
 	
 
 	function removeEventSource(source) {
 		sources = $.grep(sources, function(src) {
-			return src != source;
+			return !isSourcesEqual(src, source);
 		});
 		// remove all client events from that source
 		cache = $.grep(cache, function(e) {
-			return e.source != source;
+			return !isSourcesEqual(e.source, source);
 		});
 		reportEvents(cache);
 	}
@@ -163,6 +233,10 @@ function EventManager(options, sources) {
 				e.allDay = event.allDay;
 				e.className = event.className;
 				e.editable = event.editable;
+				e.color = event.color;
+				e.backgroudColor = event.backgroudColor;
+				e.borderColor = event.borderColor;
+				e.textColor = event.textColor;
 				normalizeEvent(e);
 			}
 		}
@@ -175,8 +249,8 @@ function EventManager(options, sources) {
 		normalizeEvent(event);
 		if (!event.source) {
 			if (stick) {
-				sources[0].push(event);
-				event.source = sources[0];
+				stickySource.events.push(event);
+				event.source = stickySource;
 			}
 			cache.push(event);
 		}
@@ -189,8 +263,8 @@ function EventManager(options, sources) {
 			cache = [];
 			// clear all array sources
 			for (var i=0; i<sources.length; i++) {
-				if (typeof sources[i] == 'object') {
-					sources[i] = [];
+				if ($.isArray(sources[i].events)) {
+					sources[i].events = [];
 				}
 			}
 		}else{
@@ -203,9 +277,8 @@ function EventManager(options, sources) {
 			cache = $.grep(cache, filter, true);
 			// remove events from array sources
 			for (var i=0; i<sources.length; i++) {
-				if (typeof sources[i] == 'object') {
-					sources[i] = $.grep(sources[i], filter, true);
-					// TODO: event objects' sources will no longer be correct reference :(
+				if ($.isArray(sources[i].events)) {
+					sources[i].events = $.grep(sources[i].events, filter, true);
 				}
 			}
 		}
@@ -252,6 +325,8 @@ function EventManager(options, sources) {
 	
 	
 	function normalizeEvent(event) {
+		var source = event.source || {};
+		var ignoreTimezone = firstDefined(source.ignoreTimezone, options.ignoreTimezone);
 		event._id = event._id || (event.id === undefined ? '_fc' + eventGUID++ : event.id + '');
 		if (event.date) {
 			if (!event.start) {
@@ -259,14 +334,14 @@ function EventManager(options, sources) {
 			}
 			delete event.date;
 		}
-		event._start = cloneDate(event.start = parseDate(event.start, options.ignoreTimezone));
-		event.end = parseDate(event.end, options.ignoreTimezone);
+		event._start = cloneDate(event.start = parseDate(event.start, ignoreTimezone));
+		event.end = parseDate(event.end, ignoreTimezone);
 		if (event.end && event.end <= event.start) {
 			event.end = null;
 		}
 		event._end = event.end ? cloneDate(event.end) : null;
 		if (event.allDay === undefined) {
-			event.allDay = options.allDayDefault;
+			event.allDay = firstDefined(source.allDayDefault, options.allDayDefault);
 		}
 		if (event.className) {
 			if (typeof event.className == 'string') {
@@ -276,6 +351,37 @@ function EventManager(options, sources) {
 			event.className = [];
 		}
 		// TODO: if there is no start date, return false to indicate an invalid event
+	}
+	
+	
+	
+	/* Utils
+	------------------------------------------------------------------------------*/
+	
+	
+	function normalizeSource(source) {
+		if (source.className) {
+			// TODO: repeat code, same code for event classNames
+			if (typeof source.className == 'string') {
+				source.className = source.className.split(/\s+/);
+			}
+		}else{
+			source.className = [];
+		}
+		var normalizers = fc.sourceNormalizers;
+		for (var i=0; i<normalizers.length; i++) {
+			normalizers[i](source);
+		}
+	}
+	
+	
+	function isSourcesEqual(source1, source2) {
+		return source1 && source2 && getSourcePrimitive(source1) == getSourcePrimitive(source2);
+	}
+	
+	
+	function getSourcePrimitive(source) {
+		return ((typeof source == 'object') ? (source.events || source.url) : '') || source;
 	}
 
 
