@@ -6,7 +6,14 @@
 .fc-widget-content {  /* <td>, usually */
 	border: 1px solid #ccc;
 	}
-	
+
+.fc-border-separate th.fc-summary-header,
+.fc-border-separate td.fc-summary {
+	border-right-width: 1px;
+        background-color: #eee;
+        border-left: none;
+	}
+
 .fc-state-highlight { /* <td> today cell */ /* TODO: add .fc-today to <th> */
 	background: #ffc;
 	}

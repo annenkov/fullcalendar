@@ -28,12 +28,15 @@ function Calendar(element, options, eventSources) {
 	t.getView = getView;
 	t.option = option;
 	t.trigger = trigger;
+        t.refetchSummary = refetchSummary;
 	
 	
 	// imports
 	EventManager.call(t, options, eventSources);
+        SummaryManager.call(t, options, element);        
 	var isFetchNeeded = t.isFetchNeeded;
 	var fetchEvents = t.fetchEvents;
+        var fetchSummary = t.fetchSummary;        
 	
 	
 	// locals
@@ -217,6 +220,8 @@ function Calendar(element, options, eventSources) {
 			currentView.sizeDirty = false;
 			currentView.eventsDirty = false;
 			updateEvents(forceEventRender);
+                        
+                        refetchSummary();
 			
 			elementOuterWidth = element.outerWidth();
 			
@@ -326,6 +331,9 @@ function Calendar(element, options, eventSources) {
 		fetchEvents(currentView.visStart, currentView.visEnd); // will call reportEvents
 	}
 	
+        function refetchSummary() {
+                fetchSummary();
+        }
 	
 	// called when event data arrives
 	function reportEvents(_events) {

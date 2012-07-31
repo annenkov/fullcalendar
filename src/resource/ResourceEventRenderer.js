@@ -8,7 +8,7 @@ function ResourceEventRenderer() {
 	t.compileDaySegs = compileSegs; // for DayEventRenderer
 	t.clearEvents = clearEvents;
 	t.bindDaySeg = bindDaySeg;
-	t.resizableResourceEvent = resizableResourceEvent;
+	t.resizableResourceEvent = resizableResourceEvent;        
 	
 	
 	// imports
