@@ -1,3 +1,8 @@
+Fork of  Full-sized drag & drop event calendar with Resource views (jQuery plugin) http://tux.fi/~jarnok/fullcalendar-resourceviews/
+This fork adds "summary" column with own fetcher and renderer.
+
+Original readme:
+
 
 FullCalendar - Full-sized drag & drop event calendar
 ====================================================
@@ -44,4 +49,4 @@ Here is an example of doing it within an element having an `id` of `calendar`:
 	
 	});
 	
-To see a full list of all available options, please consult the [FullCalendar documentation &raquo;](http://arshaw.com/fullcalendar/docs/)
+To see a full list of all available options, please consult the [FullCalendar documentation](http://arshaw.com/fullcalendar/docs/)
