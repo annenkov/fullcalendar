@@ -78,22 +78,19 @@ function ResourceEventRenderer() {
 			});
 		}
 
-		for (i=0; i<rowCnt; i++) {
-			currentResource = resources[i].id;
-			row = stackSegs(sliceSegs(events, visEventsEnds, d1, d2));
+        for (i=0; i<rowCnt; i++) {
+            currentResource = resources[i].id;
+            // disabled stackSegs(comparing to original compileSegs), seems what it not needed anymore
+            row = sliceSegs(events, visEventsEnds, d1, d2);
 
-			for (j=0; j<row.length; j++) {
-				level = row[j];
-				for (k=0; k<level.length; k++) {
-					seg = level[k];
-					seg.row = i;
-					seg.level = j; // not needed anymore
-					if(currentResource == seg['event'].resource) {
-						segs.push(seg);
-					}
-				}
-			}
-		}
+            for (j=0; j<row.length; j++) {
+                seg = row[j];
+                seg.row = i;
+                if(currentResource == seg['event'].resource) {
+                    segs.push(seg);
+                }
+            }
+        }
 		return segs;
 	}
 	
