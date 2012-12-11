@@ -30,8 +30,27 @@
 			selectable: true,
 			minTime: 8,
 			maxTime:16,
-			selectHelper: true,
-			resources: 'json-resources.php',
+			selectHelper: true,                        
+			resources: [
+				{
+					name: 'Resource 2',
+					id:	'resource2'
+				},
+				{
+					name: 'Resource 1',
+					id:	'resource1'
+				}
+			],
+                        summary: function(callback) {callback( [
+				{
+					contents: 'Summary 2',
+					resource: 'resource2'
+				},
+				{
+					contents: 'Summary 1',
+					resource: 'resource1'
+				}
+			])},
 			events: [
 				{
 					title: 'Lunch 12.15-14.45',
@@ -100,6 +119,9 @@
 					resource: 'resource2'
 				}			
 			],
+                        summaryClick: function (resourceId, summaryItemText) {
+                            alert('Clicked summary: ' + summaryItemText);
+                        },
 			select: function(start, end, allDay, jsEvent, view, resource) {
 				var title = prompt('event title:');
 
@@ -141,7 +163,16 @@
 					return false;
 				});
 			},
-			windowResize: function( view ) {
+			height: calcCalendarHeight()
+		});
+		
+		function calcCalendarHeight() {
+			var h = $(window).height() - 40;
+			console.log(h);
+			return h;
+		}
+		
+		windowResize: function( view ) {
 				calendar.fullCalendar('option', 'height', $(window).height() - 40);
 			}
 		});
