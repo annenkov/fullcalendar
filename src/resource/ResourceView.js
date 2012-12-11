@@ -135,10 +135,15 @@ function ResourceView(element, calendar, viewName) {
 			s +=
 				"<th class='fc- " + headerClass + "'/>"; // need fc- for setDayID
 		}
-		s +=
-			"</tr>" +
-			"</thead>" +
-			"<tbody>";
+                // Summary header (only in resourceMonth view)
+                if (viewName =='resourceMonth') {
+                        var summaryHeader = opt('summaryHeader');
+                        s += "<th class='fc-summary-header fc-widget-header'>" + (summaryHeader ? summaryHeader: 'Summary') + "</th>"
+                }
+                s +=
+	            "</tr>" +
+		        "</thead>" +
+	            "<tbody>";
 		for (i=0; i<maxRowCnt; i++) {
 			id = resources[i]['id'];
 			resourceName = resources[i]['name'];
@@ -158,19 +163,25 @@ function ResourceView(element, calendar, viewName) {
 					"</div>" +
 					"</td>";
 			}
-			s +=
-				"</tr>";
+                        // Summary column (only in resourceMonth view)
+                        if (viewName == 'resourceMonth') {
+                                s += "<td class='fc-summary fc-widget-content' " + "data-resource='"+ id + "'><span></span></td>";
+			        s +=
+				        "</tr>";
+                        }
 		}
 		s +=
 			"</tbody>" +
 			"</table>";
+                
+
 		table = element.html($(s));
-		
+                	
 		head = table.find('thead');
-		headCells = head.find('th:not(th.fc-resourceName)');
+		headCells = head.find('th:not(th.fc-resourceName, th.fc-summary-header)');
 		body = table.find('tbody');
 		bodyRows = body.find('tr');
-		bodyCells = body.find('td:not(td.fc-resourceName)');
+		bodyCells = body.find('td:not(td.fc-resourceName, td.fc-summary)');
 		bodyFirstCells = bodyRows.children().filter(':first-child');
 		bodyCellTopInners = bodyRows.eq(0).find('div.fc-day-content div');
 		
@@ -186,19 +197,21 @@ function ResourceView(element, calendar, viewName) {
 		// marks first+last td's from each row
 		bodyCells.removeClass('fc-first fc-last');
 		bodyRows.each(function() {
-			$(this).children('td:not(td.fc-resourceName):first').addClass('fc-first');
-			$(this).children('td:not(td.fc-resourceName):last').addClass('fc-last');
+			$(this).children('td:not(td.fc-resourceName,td.fc-summary):first').addClass('fc-first');
+			$(this).children('td:not(td.fc-resourceName,td.fc-summary):last').addClass('fc-last');
 		});
 		bodyRows.eq(0).addClass('fc-first'); // fc-last is done in updateCells
 		
 		dayBind(bodyCells);
+        var summaryCells = body.find('td.fc-summary');
+                
+        summaryBind(summaryCells);
 		
 		daySegmentContainer =
 			$("<div style='position:absolute;z-index:8;top:0;left:0'/>")
 				.appendTo(element);
 	}
-	
-	
+		
 	
 	function updateCells(firstTime) {
 		var month = t.start.getMonth();
@@ -226,9 +239,9 @@ function ResourceView(element, calendar, viewName) {
 		
 		indexCorrecter=0;
 		bodyCells.each(function(i, _cell) {
-			cell = $(_cell);		
+			cell = $(_cell);
 			date = indexDate(i);
-			
+
 			if (+date == +today) {
 				cell.addClass(tm + '-state-highlight fc-today');
 			}else{
@@ -312,10 +325,19 @@ function ResourceView(element, calendar, viewName) {
 		}
 	}
 	
+        /* Summary clicking and binding 
+        -----------------------------------------------------------*/
+        
+        function summaryBind(summary) {
+            summary.click(function(s){
+                trigger('summaryClick', this, $(this).data('resource'), $(this).text());
+            });
+        }
 	
+          
 	
 	/* Semi-transparent Overlay Helpers
-	------------------------------------------------------*/
+	-----------------------------------------------------------*/
 	
 	
 	function renderDayOverlay(overlayStart, overlayEnd, refreshCoordinateGrid, overlayRow) { // overlayEnd is exclusive
